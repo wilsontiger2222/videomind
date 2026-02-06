@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 from app.database import init_db
+from app.routers import analyze, results
 
 app = FastAPI(
     title="VideoMind API",
     description="Turn any video into text, summaries, and insights",
     version="0.1.0"
 )
+
+app.include_router(analyze.router)
+app.include_router(results.router)
 
 @app.on_event("startup")
 def startup():
