@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.database import init_db
 from app.routers import analyze, results
+from app.middleware.auth import APIKeyMiddleware
 
 app = FastAPI(
     title="VideoMind API",
@@ -8,6 +9,7 @@ app = FastAPI(
     version="0.1.0"
 )
 
+app.add_middleware(APIKeyMiddleware)
 app.include_router(analyze.router)
 app.include_router(results.router)
 
