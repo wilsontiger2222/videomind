@@ -53,3 +53,31 @@ def test_status_endpoint(client):
 def test_result_not_found(client):
     response = client.get("/api/v1/result/nonexistent", headers=AUTH)
     assert response.status_code == 404
+
+def test_result_includes_visual_analysis(client):
+    job_id = create_job(TEST_DB, url="https://youtube.com/watch?v=test", options={})
+    update_job_status(
+        TEST_DB, job_id,
+        status="completed",
+        video_title="Test",
+        video_duration="60",
+        video_source="youtube",
+        transcript_text="Hello",
+        transcript_segments="[]",
+        summary_short="Short",
+        summary_detailed="Detailed",
+        chapters="[]",
+        subtitles_srt="",
+        visual_analysis='[{"timestamp": 5.0, "frame_path": "/frames/f1.jpg", "description": "A terminal"}]'
+    )
+
+    with patch("app.routers.results.DATABASE_URL", TEST_DB):
+        response = client.get(
+            f"/api/v1/result/{job_id}",
+            headers={"Authorization": "Bearer test-key-123"}
+        )
+    assert response.status_code == 200
+    data = response.json()
+    assert "visual_analysis" in data
+    assert len(data["visual_analysis"]) == 1
+    assert data["visual_analysis"][0]["description"] == "A terminal"

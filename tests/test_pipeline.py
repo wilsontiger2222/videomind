@@ -69,3 +69,40 @@ def test_generate_srt():
     assert "00:00:00,000 --> 00:00:05,200" in srt
     assert "Hello world" in srt
     assert "2" in srt
+
+@patch("app.workers.pipeline.analyze_frames")
+@patch("app.workers.pipeline.deduplicate_frames")
+@patch("app.workers.pipeline.extract_frames")
+@patch("app.workers.pipeline.summarize_transcript")
+@patch("app.workers.pipeline.transcribe_audio")
+@patch("app.workers.pipeline.extract_audio")
+@patch("app.workers.pipeline.download_video")
+def test_pipeline_with_visual_analysis(
+    mock_download, mock_audio, mock_transcribe, mock_summarize,
+    mock_extract_frames, mock_dedup, mock_analyze_frames
+):
+    mock_download.return_value = {
+        "title": "Test Video", "duration": 120,
+        "source": "youtube", "file_path": "/tmp/test.mp4"
+    }
+    mock_audio.return_value = "/tmp/test.wav"
+    mock_transcribe.return_value = {
+        "full_text": "Hello world",
+        "segments": [{"start": 0.0, "end": 5.0, "text": "Hello world"}]
+    }
+    mock_summarize.return_value = {
+        "short": "A greeting.", "detailed": "The video contains a greeting.",
+        "chapters": [{"start": "0:00", "end": "0:05", "title": "Greeting"}]
+    }
+    mock_extract_frames.return_value = ["/tmp/frames/frame_0001.jpg", "/tmp/frames/frame_0002.jpg"]
+    mock_dedup.return_value = ["/tmp/frames/frame_0001.jpg"]
+    mock_analyze_frames.return_value = [
+        {"timestamp": 5.0, "frame_path": "/tmp/frames/frame_0001.jpg", "description": "A terminal window"}
+    ]
+
+    job_id = create_job(TEST_DB, url="https://youtube.com/watch?v=test", options={"visual_analysis": True})
+    process_video(job_id, TEST_DB)
+
+    job = get_job(TEST_DB, job_id)
+    assert job["status"] == "completed"
+    assert "terminal window" in job["visual_analysis"]

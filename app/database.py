@@ -15,6 +15,7 @@ def init_db(db_path=None):
     conn.execute("""
         CREATE TABLE IF NOT EXISTS jobs (
             id TEXT PRIMARY KEY,
+            user_id TEXT DEFAULT '',
             url TEXT NOT NULL,
             options TEXT DEFAULT '{}',
             status TEXT DEFAULT 'pending',
@@ -29,9 +30,24 @@ def init_db(db_path=None):
             summary_detailed TEXT DEFAULT '',
             chapters TEXT DEFAULT '[]',
             subtitles_srt TEXT DEFAULT '',
+            visual_analysis TEXT DEFAULT '[]',
             error_message TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             completed_at TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            api_key TEXT UNIQUE NOT NULL,
+            plan TEXT DEFAULT 'free',
+            stripe_customer_id TEXT DEFAULT '',
+            videos_today INTEGER DEFAULT 0,
+            videos_today_reset TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()

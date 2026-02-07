@@ -57,5 +57,6 @@ def get_result(job_id: str):
             "detailed": job["summary_detailed"]
         },
         "chapters": json.loads(job["chapters"] or "[]"),
-        "subtitles_srt": job["subtitles_srt"]
+        "subtitles_srt": job["subtitles_srt"],
+        "visual_analysis": json.loads(job["visual_analysis"] or "[]")
     }

@@ -27,3 +27,12 @@ def test_update_job_status():
     assert job["status"] == "processing"
     assert job["progress"] == 50
     assert job["step"] == "Transcribing..."
+
+def test_job_stores_visual_analysis():
+    job_id = create_job(TEST_DB, url="https://youtube.com/watch?v=test", options={})
+    update_job_status(
+        TEST_DB, job_id,
+        visual_analysis='[{"timestamp": 5.0, "description": "A code editor"}]'
+    )
+    job = get_job(TEST_DB, job_id)
+    assert '"timestamp": 5.0' in job["visual_analysis"]
